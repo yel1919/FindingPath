@@ -2,7 +2,7 @@
 #define PATH_H
 
 #include <QVector>
-#include "error.h"
+#include "../Error/error.h"
 
 namespace find_path {
     template<typename T>

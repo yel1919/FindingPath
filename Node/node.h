@@ -3,7 +3,7 @@
 
 #include <QRect>
 #include <QList>
-#include "path.h"
+#include "../Path/path.h"
 
 namespace find_path {
     class Node {
