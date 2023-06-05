@@ -18,6 +18,8 @@ set(PROJECT_SOURCES
         error.h
         error.cpp
         path.h
+        node.h
+        node.cpp
         main.cpp
         mainwindow.cpp
         mainwindow.h

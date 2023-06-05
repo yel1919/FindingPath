@@ -17,6 +17,7 @@ namespace find_path {
         explicit Path(QVector<T>&& path) { path = std::move(path); }
         Path(const Path& path) : path(path) {}
         Path(Path&& path) { this->path = std::move(path.path); }
+        virtual ~Path() = default;
 
         inline Path& operator=(const Path& path) {
             if(this != &path) {
@@ -42,13 +43,13 @@ namespace find_path {
 
         inline const T& at(int index) const {
             if(index < 0 || index > path.size())
-                throw Exception("Array index out of bounds");
+                throw Exception("Path object error: Array index out of bounds");
             return path[index];
         }
 
         inline T& at(int index) {
             if(index < 0 || index > path.size())
-                throw Exception("Array index out of bounds");
+                throw Exception("Path object error: Array index out of bounds");
             return path[index];
         }
 
