@@ -17,7 +17,7 @@ namespace find_path {
         explicit Path(QVector<T>&& path) { path = std::move(path); }
         Path(const Path& path) : path(path) {}
         Path(Path&& path) { this->path = std::move(path.path); }
-        virtual ~Path() = default;
+        virtual ~Path() {};
 
         inline Path& operator=(const Path& path) {
             if(this != &path) {
