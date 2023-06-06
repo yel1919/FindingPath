@@ -5,6 +5,7 @@
 #include <QBrush>
 #include <QGraphicsScene>
 #include <QGraphicsView>
+#include <QGraphicsItemGroup>
 #include <QResizeEvent>
 
 #include "../MapWorker/mapworker.h"
@@ -15,6 +16,8 @@ namespace find_path {
     private:
         MapWorker* worker;
         QGraphicsScene* scene;
+
+        QGraphicsItemGroup* mapGridGroup;
 
         QPen mapGridPen;
         QBrush backgroundBrush;
@@ -33,7 +36,9 @@ namespace find_path {
 
         void Init(int width, int height);
         void Remove();
+        void DeleteItemFromGroup(QGraphicsItemGroup* group);
     protected:
+        virtual void ClearMap();
         virtual void DrawMap();
         virtual void RedrawMap();
 

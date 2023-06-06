@@ -8,33 +8,49 @@ Map::Map(QWidget* parent)
       backgroundBrush(Qt::blue),
       disabledNodeBrush(Qt::green)
 {
-    //setGeometry(10, 10, 255, 255);
-    scene = new QGraphicsScene(this);
-    worker = new MapWorker();
+    mapGridGroup = new QGraphicsItemGroup();
 
+    scene = new QGraphicsScene(this);
+    scene->addItem(mapGridGroup);
 
     setScene(scene);
     setMouseTracking(true);
 
-
+    worker = new MapWorker();
 }
 
 Map::~Map() {
+    delete mapGridGroup;
     delete scene;
+
     delete worker;
+}
+
+void Map::DeleteItemFromGroup(QGraphicsItemGroup* group) {
+    for(auto item : scene->items(group->boundingRect())) {
+        if(item->group() == group) {
+            delete item;
+            item = nullptr;
+        }
+    }
+}
+
+void Map::ClearMap() {
+    DeleteItemFromGroup(mapGridGroup);
 }
 
 void Map::DrawMap() {
     scene->setBackgroundBrush(backgroundBrush);
 
     QRectF src = scene->sceneRect();
-    scene->addLine(src.left()+10, src.top()+10, src.right()-10, src.top()+10, mapGridPen);
-    scene->addLine(src.left()+10, src.top()+10, src.left()+10, src.bottom()-10, mapGridPen);
-    scene->addLine(src.left()+10, src.bottom(), src.right()-10, src.bottom()-10, mapGridPen);
-    scene->addLine(src.right()-10, src.top()+10, src.right()-10, src.bottom()-10, mapGridPen);
+    mapGridGroup->addToGroup(scene->addLine(src.left(), src.top(), src.right(), src.top(), mapGridPen));
+    mapGridGroup->addToGroup(scene->addLine(src.left(), src.top(), src.left(), src.bottom(), mapGridPen));
+    mapGridGroup->addToGroup(scene->addLine(src.left(), src.bottom(), src.right(), src.bottom(), mapGridPen));
+    mapGridGroup->addToGroup(scene->addLine(src.right(), src.top(), src.right(), src.bottom(), mapGridPen));
 }
 
 void Map::RedrawMap() {
+    ClearMap();
     DrawMap();
 }
 
@@ -69,11 +85,12 @@ void Map::Create(int w, int h) {
 }
 
 void Map::Clear() {
+    ClearMap();
     Remove();
 }
 
 void Map::resizeEvent(QResizeEvent *event) {
-    scene->setSceneRect(QRectF(0, 0, event->size().width(), event->size().height()));
+    scene->setSceneRect(QRectF(10, 10, event->size().width() - 10, event->size().height() - 10));
 
     valueDivisionX = scene->sceneRect().width() / width;
     valueDivisionY = scene->sceneRect().height() / height;
@@ -82,5 +99,6 @@ void Map::resizeEvent(QResizeEvent *event) {
     worker->Recalc();
 
     RedrawMap();
+
     QGraphicsView::resizeEvent(event);
 }

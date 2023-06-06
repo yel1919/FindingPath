@@ -55,6 +55,15 @@ void MapWorker::Bind(Node* from, Node* to) {
     }
 }
 
+QRect MapWorker::CalcNodeRect(int index, int jndex) {
+    return QRect(
+                index * valueDivisionX,
+                jndex * valueDivisionY,
+                valueDivisionX,
+                valueDivisionY
+    );
+}
+
 void MapWorker::Initialization() {
     map->resize(width, QVector<Node*>(height, nullptr));
 
@@ -67,11 +76,11 @@ void MapWorker::Initialization() {
             int modY = std::distance(itW->begin(), itH);
 
             Node* node = new Node(
-                                std::distance(map->begin(), itW) * valueDivisionX,
-                                modY * valueDivisionY,
-                                valueDivisionX,
-                                valueDivisionY,
-                                dist(gen)
+                        CalcNodeRect(
+                            std::distance(map->begin(), itW),
+                            modY
+                        ),
+                        dist(gen)
             );
 
             *itH = node;
@@ -89,17 +98,12 @@ void MapWorker::Initialization() {
 void MapWorker::Recalc() {
     for(auto itW = map->begin(); itW < map->end(); ++itW) {
         for(auto itH = itW->begin(); itH < itW->end(); ++itH) {
-            int modX = std::distance(map->begin(), itW);
-            int modY = std::distance(itW->begin(), itH);
-
             (*itH)->SetRect(
-                        QRect(
-                            modX * valueDivisionX,
-                            modY * valueDivisionY,
-                            valueDivisionX,
-                            valueDivisionY
+                        CalcNodeRect(
+                            std::distance(map->begin(), itW),
+                            std::distance(itW->begin(), itH)
                         )
-            );
+                    );
         }
     }
 }
@@ -114,6 +118,8 @@ void MapWorker::Remove() {
 
     map->clear();
     inited = false;
+
+    emit removed();
 }
 
 void MapWorker::Init() {

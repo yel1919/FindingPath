@@ -11,7 +11,7 @@ namespace find_path {
         Q_OBJECT
         Q_DISABLE_COPY(MapWorker)
     private:
-        QVector<QVector<Node*>>* map;
+        MapMatrix* map;
 
         int width;
         int height;
@@ -19,10 +19,11 @@ namespace find_path {
         qreal valueDivisionY;
 
         bool inited;
-
-        void Initialization();
-        void Remove();
     protected:
+        void Initialization();
+        QRect CalcNodeRect(int index, int jndex);
+        void Remove();
+
         virtual void Bind(Node* from, Node* to);
     public:
         MapWorker(QObject* parent = nullptr);
@@ -40,6 +41,9 @@ namespace find_path {
         virtual void Init();
         virtual void Recalc();
         virtual void Clear();
+    public: signals:
+        void removed();
+        void ready();
     };
 }
 
