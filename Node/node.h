@@ -29,12 +29,14 @@ namespace find_path {
 
         const bool IsEnabled() const;
         void SetEnabled(const bool flag);
+
+        const QRect& GetRect() const;
+        void SetRect(const QRect& rect);
+
         const bool HasEdge(const Node& to) const;
         const QList<Node*>& RelatedEdges() const;
-        const QRect& GetRect() const;
 
-        void AddEdge(Node& to);
-        void RemoveEdge(Node& to);
+
 
         void AddEdge(Node* to);
         void RemoveEdge(Node* to);

@@ -107,6 +107,10 @@ const QRect& find_path::Node::GetRect() const {
     return rect;
 }
 
+void find_path::Node::SetRect(const QRect& rc) {
+    rect = rc;
+}
+
 void find_path::Node::AddEdge(Node* to) {
     if(to == nullptr)
         throw Exception("Node object is null");
