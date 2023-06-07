@@ -12,7 +12,7 @@ find_path::Node::Node(bool flag)
     count++;
 }
 
-find_path::Node::Node(const QRect& rect, bool flag)
+find_path::Node::Node(const QRectF& rect, bool flag)
     :
       value(count),
       rect(rect),
@@ -103,11 +103,11 @@ const QList<find_path::Node*>& find_path::Node::RelatedEdges() const {
     return edges;
 }
 
-const QRect& find_path::Node::GetRect() const {
+const QRectF& find_path::Node::GetRect() const {
     return rect;
 }
 
-void find_path::Node::SetRect(const QRect& rc) {
+void find_path::Node::SetRect(const QRectF& rc) {
     rect = rc;
 }
 

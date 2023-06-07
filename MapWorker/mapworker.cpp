@@ -6,6 +6,9 @@ MapWorker::MapWorker(QObject* parent)
     :
       QObject(parent),
       map(new MapMatrix({})),
+      disableNodes(new NodeList({})),
+      start(nullptr),
+      finish(nullptr),
       width(0),
       height(0),
       valueDivisionX(0),
@@ -15,6 +18,9 @@ MapWorker::MapWorker(QObject* parent)
 
 MapWorker::~MapWorker() {
     Remove();
+
+    delete disableNodes;
+    disableNodes = nullptr;
 
     delete map;
     map = nullptr;
@@ -73,17 +79,22 @@ void MapWorker::Initialization() {
 
     for(auto itW = map->begin(); itW < map->end(); ++itW) {
         for(auto itH = itW->begin(); itH < itW->end(); ++itH) {
+            int modX = std::distance(map->begin(), itW);
             int modY = std::distance(itW->begin(), itH);
 
             Node* node = new Node(
                         CalcNodeRect(
-                            std::distance(map->begin(), itW),
+                            modX,
                             modY
                         ),
                         dist(gen)
             );
 
             *itH = node;
+
+            if(!node->IsEnabled()) {
+                disableNodes->push_back(QPair<int, int>(modX, modY));
+            }
 
             if(itW > map->begin())
                 Bind(node, *((itW - 1)->begin() + modY));
@@ -93,33 +104,32 @@ void MapWorker::Initialization() {
     }
 
     inited = true;
+
+    emit ready(disableNodes);
 }
 
 void MapWorker::Recalc() {
-    for(auto itW = map->begin(); itW < map->end(); ++itW) {
-        for(auto itH = itW->begin(); itH < itW->end(); ++itH) {
-            (*itH)->SetRect(
-                        CalcNodeRect(
-                            std::distance(map->begin(), itW),
-                            std::distance(itW->begin(), itH)
-                        )
-                    );
-        }
+    if(inited) {
+        emit recalcReady(disableNodes);
     }
 }
 
 void MapWorker::Remove() {
-    for(auto itW = map->begin(); itW < map->end(); ++itW) {
-        for(auto itH = itW->begin(); itH < itW->end(); ++itH) {
-            delete *itH;
-            *itH = nullptr;
+    if(inited) {
+        disableNodes->clear();
+
+        for(auto itW = map->begin(); itW < map->end(); ++itW) {
+            for(auto itH = itW->begin(); itH < itW->end(); ++itH) {
+                delete *itH;
+                *itH = nullptr;
+            }
         }
+
+        map->clear();
+        inited = false;
+
+        emit removed();
     }
-
-    map->clear();
-    inited = false;
-
-    emit removed();
 }
 
 void MapWorker::Init() {
@@ -130,4 +140,27 @@ void MapWorker::Init() {
 
 void MapWorker::Clear() {
     Remove();
+}
+
+
+void MapWorker::SetStart(int index, int jndex) {
+    if(inited) {
+        if(
+                index >= 0 && index < map->size() &&
+                jndex >= 0 && jndex < (*map)[index].size()
+        ) {
+            start = (*map)[index][jndex];
+        }
+    }
+}
+
+void MapWorker::SetFinish(int index, int jndex) {
+    if(inited) {
+        if(
+                index >= 0 && index < map->size() &&
+                jndex >= 0 && jndex < (*map)[index].size()
+        ) {
+            finish = (*map)[index][jndex];
+        }
+    }
 }

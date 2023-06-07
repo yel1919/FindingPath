@@ -12,13 +12,13 @@ namespace find_path {
         bool enabled;
         QList<Node*> edges;
 
-        QRect rect;
+        QRectF rect;
 
         static uint count;
     protected:
     public:
         explicit Node(bool flag = false);
-        explicit Node(const QRect& rect, bool flag = false);
+        explicit Node(const QRectF& rect, bool flag = false);
         Node(int x, int y, int width, int height, bool flag = false);
         Node(const Node& node);
         Node(Node&& node);
@@ -30,8 +30,8 @@ namespace find_path {
         const bool IsEnabled() const;
         void SetEnabled(const bool flag);
 
-        const QRect& GetRect() const;
-        void SetRect(const QRect& rect);
+        const QRectF& GetRect() const;
+        void SetRect(const QRectF& rect);
 
         const bool HasEdge(const Node& to) const;
         const QList<Node*>& RelatedEdges() const;

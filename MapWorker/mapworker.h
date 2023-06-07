@@ -6,12 +6,17 @@
 
 namespace find_path {
     typedef QVector<QVector<Node*>> MapMatrix;
+    typedef QList<QPair<int, int>> NodeList;
 
     class MapWorker : public QObject {
         Q_OBJECT
         Q_DISABLE_COPY(MapWorker)
     private:
         MapMatrix* map;
+        NodeList* disableNodes;
+
+        Node* start;
+        Node* finish;
 
         int width;
         int height;
@@ -25,6 +30,7 @@ namespace find_path {
         void Remove();
 
         virtual void Bind(Node* from, Node* to);
+        //virtual Path<Node*> BFS(Node* from, Node* to);
     public:
         MapWorker(QObject* parent = nullptr);
         virtual ~MapWorker();
@@ -38,12 +44,18 @@ namespace find_path {
         void setValueDivisionY(qreal y);
         void setValueDivision(qreal x, qreal y);
 
+        void SetStart(int index, int jndex);
+        void SetFinish(int index, int jndex);
+
         virtual void Init();
         virtual void Recalc();
         virtual void Clear();
+        //virtual Path<Node*> FindPath(int index, int jndex);
     public: signals:
         void removed();
-        void ready();
+        void ready(NodeList*);
+        void recalcReady(NodeList*);
+        //void findFinished();
     };
 }
 
