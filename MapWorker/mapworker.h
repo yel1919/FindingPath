@@ -24,13 +24,10 @@ namespace find_path {
 
         int width;
         int height;
-        qreal valueDivisionX;
-        qreal valueDivisionY;
 
         bool inited;
     protected:
         void Initialization(int width, int height);
-        QRect CalcNodeRect(int index, int jndex);
         void Remove();
 
         void DeleteRoad(Road*& path);
@@ -41,14 +38,9 @@ namespace find_path {
         MapWorker(QObject* parent = nullptr);
         virtual ~MapWorker();
 
-        const qreal getValueDivisionX() const;
-        const qreal getValueDivisionY() const;
-        void setValueDivisionX(qreal x);
-        void setValueDivisionY(qreal y);
-        void setValueDivision(qreal x, qreal y);
-
         void SetPoint(int index, int jndex);
         void SetMovePoint(int index, int jndex);
+        void CancelFind();
 
         virtual void Init(int width, int height);
         virtual void Recalc();
@@ -60,6 +52,7 @@ namespace find_path {
         void recalcReady(NodeList*, Road*, Road*);
         void roadChanged(FindResult);
         void newRoadChanged(FindResult);
+        void canceledFind();
     };
 }
 

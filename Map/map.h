@@ -54,6 +54,8 @@ namespace find_path {
         void FindResultMoveHandler(FindResult result);
         virtual void CoordinatesToIndex(int* x, int* y);
         virtual void ClearMap();
+        virtual void ClearRoad();
+        virtual void ClearNewRoad();
 
         virtual QGraphicsRectItem* DrawNode(const QPair<int, int>& index, const QPen& pen, const QBrush& brush);
         virtual QGraphicsEllipseItem* DrawEllipseNode(const QPair<int, int>& index, const QPen& pen, const QBrush& brush);
@@ -74,6 +76,7 @@ namespace find_path {
         virtual ~Map();
     public: signals:
         void clicked(int x, int y);
+        void cancelFind();
         void mouseMove(int x, int y);
     public slots:
         virtual void Create(int width, int height);

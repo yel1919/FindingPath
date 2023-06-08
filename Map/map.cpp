@@ -35,8 +35,10 @@ Map::Map(QWidget* parent)
 
     connect(this, &Map::clicked, worker, &MapWorker::SetPoint);
     connect(this, &Map::mouseMove, worker, &MapWorker::SetMovePoint);
+    connect(this, &Map::cancelFind, worker, &MapWorker::CancelFind);
     connect(worker, &MapWorker::roadChanged, this, &Map::FindResultHandler);
     connect(worker, &MapWorker::newRoadChanged, this, &Map::FindResultMoveHandler);
+    connect(worker, &MapWorker::canceledFind, this, &Map::ClearNewRoad);
 }
 
 Map::~Map() {
@@ -76,8 +78,16 @@ void Map::DeleteItemFromGroup(QGraphicsItemGroup* group) {
 }
 
 void Map::ClearMap() {
+    ClearNewRoad();
+    ClearRoad();
     DeleteItemFromGroup(mapGridGroup);
+}
+
+void Map::ClearRoad() {
     DeleteItemFromGroup(roadGroup);
+}
+
+void Map::ClearNewRoad() {
     DeleteItemFromGroup(newRoadGroup);
 }
 
@@ -172,8 +182,8 @@ void Map::RedrawMap(NodeList* disableNodes, Road* road, Road* newRoad) {
 
 void Map::DrawPath(const Path<QPair<int, int>>* path, const QPen& pen, const QBrush& brush) {
     if(path == nullptr) return;
-    DeleteItemFromGroup(newRoadGroup);
-    DeleteItemFromGroup(roadGroup);
+    ClearNewRoad();
+    ClearRoad();
     for(auto it = path->begin(); it < path->end(); ++it) {
         roadGroup->addToGroup(
                     DrawNode(
@@ -187,7 +197,7 @@ void Map::DrawPath(const Path<QPair<int, int>>* path, const QPen& pen, const QBr
 
 void Map::DrawNewPath(const Path<QPair<int, int>>* path, const QPen& pen, const QBrush& brush) {
     if(path == nullptr) return;
-    DeleteItemFromGroup(newRoadGroup);
+    ClearNewRoad();
     for(auto it = path->begin(); it < path->end(); ++it) {
         newRoadGroup->addToGroup(
                     DrawEllipseNode(
@@ -209,8 +219,6 @@ void Map::Init(int w, int h) {
 
     valueDivisionX = scene->sceneRect().width() / w;
     valueDivisionY = scene->sceneRect().height() / h;
-
-    worker->setValueDivision(valueDivisionX, valueDivisionY);
 
     emit init(w, h);
 }
@@ -242,7 +250,6 @@ void Map::resizeEvent(QResizeEvent *event) {
     valueDivisionX = scene->sceneRect().width() / width;
     valueDivisionY = scene->sceneRect().height() / height;
 
-    worker->setValueDivision(valueDivisionX, valueDivisionY);
     emit resize();
 
     QGraphicsView::resizeEvent(event);
@@ -271,7 +278,7 @@ void Map::LButtonClick(QMouseEvent* event) {
 }
 
 void find_path::Map::RButtonClick(QMouseEvent* event) {
-
+    emit cancelFind();
 }
 
 void find_path::Map::mousePressEvent(QMouseEvent* event) {
@@ -289,4 +296,6 @@ void Map::mouseMoveEvent(QMouseEvent* event)  {
     CoordinatesToIndex(&i, &j);
 
     emit mouseMove(i, j);
+
+    QGraphicsView::mouseMoveEvent(event);
 }

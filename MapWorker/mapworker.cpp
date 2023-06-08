@@ -17,8 +17,6 @@ MapWorker::MapWorker(QObject* parent)
       newRoad(nullptr),
       width(0),
       height(0),
-      valueDivisionX(0),
-      valueDivisionY(0),
       inited(false)
 {}
 
@@ -39,40 +37,10 @@ void MapWorker::DeleteRoad(Road*& path) {
     }
 }
 
-const qreal MapWorker::getValueDivisionX() const {
-    return valueDivisionX;
-}
-
-const qreal MapWorker::getValueDivisionY() const {
-    return valueDivisionY;
-}
-
-void MapWorker::setValueDivisionX(qreal x) {
-    valueDivisionX = x;
-}
-
-void MapWorker::setValueDivisionY(qreal y) {
-    valueDivisionY = y;
-}
-
-void MapWorker::setValueDivision(qreal x, qreal y) {
-    valueDivisionX = x;
-    valueDivisionY = y;
-}
-
 void MapWorker::Bind(Node& from, Node& to) {
     if(from.IsEnabled() && to.IsEnabled()) {
         from.AddEdge(to);
     }
-}
-
-QRect MapWorker::CalcNodeRect(int index, int jndex) {
-    return QRect(
-                index * valueDivisionX,
-                jndex * valueDivisionY,
-                valueDivisionX,
-                valueDivisionY
-    );
 }
 
 void MapWorker::Initialization(int w, int h) {
@@ -121,6 +89,8 @@ void MapWorker::Remove() {
 
         DeleteRoad(road);
         DeleteRoad(newRoad);
+
+        start = nullptr;
 
         for(auto itW = map->begin(); itW < map->end(); ++itW) {
             for(auto itH = itW->begin(); itH < itW->end(); ++itH) {
@@ -249,6 +219,12 @@ void MapWorker::SetMovePoint(int index, int jndex) {
             emit newRoadChanged(result);
         }
     }
+}
+
+void MapWorker::CancelFind() {
+    start = nullptr;
+    DeleteRoad(newRoad);
+    emit canceledFind();
 }
 
 Road* MapWorker::FindPath(int index, int jndex) {
