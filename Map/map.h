@@ -22,10 +22,14 @@ namespace find_path {
         QGraphicsScene* scene;
 
         QGraphicsItemGroup* mapGridGroup;
+        QGraphicsItemGroup* roadGroup;
+        QGraphicsItemGroup* newRoadGroup;
 
         QPen mapGridPen;
         QBrush backgroundBrush;
         QBrush disabledNodeBrush;
+        QBrush roadBrush;
+        QBrush errorRoadBrush;
 
         qreal valueDivisionX;
         qreal valueDivisionY;
@@ -43,14 +47,20 @@ namespace find_path {
         void DeleteItemFromGroup(QGraphicsItemGroup* group);
     protected: signals:
         void resize();
-        void init();
+        void init(int width, int height);
         void remove();
     protected:
+        void FindResultHandler(FindResult result);
+        void FindResultMoveHandler(FindResult result);
         virtual void CoordinatesToIndex(int* x, int* y);
         virtual void ClearMap();
-        virtual void DrawNode(const QPair<int, int>& index);
+
+        virtual QGraphicsRectItem* DrawNode(const QPair<int, int>& index, const QPen& pen, const QBrush& brush);
+        virtual QGraphicsEllipseItem* DrawEllipseNode(const QPair<int, int>& index, const QPen& pen, const QBrush& brush);
         virtual void DrawMap(NodeList* disableRects);
         virtual void RedrawMap(NodeList* disableRects);
+        virtual void DrawPath(const Path<QPair<int, int>>* path, const QPen& pen, const QBrush& brush);
+        virtual void DrawNewPath(const Path<QPair<int, int>>* path, const QPen& pen, const QBrush& brush);
 
         virtual void LButtonClick(QMouseEvent* event);
         virtual void RButtonClick(QMouseEvent* event);
@@ -58,11 +68,13 @@ namespace find_path {
         void resizeEvent(QResizeEvent *event) override;
         void wheelEvent(QWheelEvent* event) override;
         void mousePressEvent(QMouseEvent* event) override;
+        void mouseMoveEvent(QMouseEvent* event) override;
     public:
         Map(QWidget* parent = nullptr);
         virtual ~Map();
     public: signals:
         void clicked(int x, int y);
+        void mouseMove(int x, int y);
     public slots:
         virtual void Create(int width, int height);
         virtual void Clear();

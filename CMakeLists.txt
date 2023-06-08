@@ -20,6 +20,8 @@ set(PROJECT_SOURCES
         Path/path.h
         Node/node.h
         Node/node.cpp
+        FindResult/findresult.h
+        FindResult/findresult.cpp
         Map/map.h
         Map/map.cpp
         MapWorker/mapworker.h

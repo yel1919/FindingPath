@@ -5,27 +5,6 @@ uint find_path::Node::count = 0;
 find_path::Node::Node(bool flag)
     :
       value(count),
-      rect(0, 0, 20, 20),
-      enabled(flag),
-      edges({})
-{
-    count++;
-}
-
-find_path::Node::Node(const QRectF& rect, bool flag)
-    :
-      value(count),
-      rect(rect),
-      enabled(flag),
-      edges({})
-{
-    count++;
-}
-
-find_path::Node::Node(int x, int y, int width, int height, bool flag)
-    :
-      value(count),
-      rect(x, y, width, height),
       enabled(flag),
       edges({})
 {
@@ -35,7 +14,6 @@ find_path::Node::Node(int x, int y, int width, int height, bool flag)
 find_path::Node::Node(const Node& node)
     :
       value(node.value),
-      rect(node.rect),
       enabled(node.enabled),
       edges(node.edges)
 {}
@@ -43,13 +21,11 @@ find_path::Node::Node(const Node& node)
 find_path::Node::Node(Node&& node)
     :
       value(node.value),
-      rect(node.rect),
       enabled(node.enabled)
 {
     edges = std::move(node.edges);
 
     node.value = 0;
-    node.rect.setRect(0,0,20,20);
     node.enabled = false;
 }
 
@@ -66,7 +42,6 @@ find_path::Node::~Node() {
 find_path::Node& find_path::Node::operator=(const Node& node) {
     if(&node != this) {
         value = node.value;
-        rect = node.rect;
         enabled = node.enabled;
         edges = node.edges;
     }
@@ -76,12 +51,10 @@ find_path::Node& find_path::Node::operator=(const Node& node) {
 find_path::Node& find_path::Node::operator=(Node&& node) {
     if(&node != this) {
         value = node.value;
-        rect = node.rect;
         enabled = node.enabled;
         edges = std::move(node.edges);
 
         node.value = 0;
-        node.rect.setRect(0,0,20,20);
         node.enabled = false;
     }
     return *this;
@@ -103,26 +76,12 @@ const QList<find_path::Node*>& find_path::Node::RelatedEdges() const {
     return edges;
 }
 
-const QRectF& find_path::Node::GetRect() const {
-    return rect;
+void find_path::Node::AddEdge(Node& to) {
+    edges.push_back(&to);
+    to.edges.push_back(this);
 }
 
-void find_path::Node::SetRect(const QRectF& rc) {
-    rect = rc;
-}
-
-void find_path::Node::AddEdge(Node* to) {
-    if(to == nullptr)
-        throw Exception("Node object is null");
-
-    edges.push_back(to);
-    to->edges.push_back(this);
-}
-
-void find_path::Node::RemoveEdge(Node* to) {
-    if(to == nullptr)
-        throw Exception("Node object is null");
-
-    edges.removeAll(to);
-    to->edges.removeAll(this);
+void find_path::Node::RemoveEdge(Node& to) {
+    edges.removeAll(&to);
+    to.edges.removeAll(this);
 }

@@ -7,12 +7,18 @@ Map::Map(QWidget* parent)
       mapGridPen(Qt::black),
       backgroundBrush(Qt::blue),
       disabledNodeBrush(Qt::green),
+      roadBrush(Qt::white),
+      errorRoadBrush(Qt::red),
       currScale(1)
 {
     mapGridGroup = new QGraphicsItemGroup();
+    roadGroup = new QGraphicsItemGroup();
+    newRoadGroup = new QGraphicsItemGroup();
 
     scene = new QGraphicsScene(this);
     scene->addItem(mapGridGroup);
+    scene->addItem(roadGroup);
+    scene->addItem(newRoadGroup);
 
     setScene(scene);
     setMouseTracking(true);
@@ -27,12 +33,21 @@ Map::Map(QWidget* parent)
     connect(this, &Map::remove, worker, &MapWorker::Clear);
     connect(this, &Map::resize, worker, &MapWorker::Recalc);
 
-    connect(this, &Map::clicked, worker, &MapWorker::SetStart);
+    connect(this, &Map::clicked, worker, &MapWorker::SetPoint);
+    connect(this, &Map::mouseMove, worker, &MapWorker::SetMovePoint);
+    connect(worker, &MapWorker::roadChanged, this, &Map::FindResultHandler);
+    connect(worker, &MapWorker::newRoadChanged, this, &Map::FindResultMoveHandler);
 }
 
 Map::~Map() {
     delete worker;
     worker = nullptr;
+
+    delete newRoadGroup;
+    newRoadGroup = nullptr;
+
+    delete roadGroup;
+    roadGroup = nullptr;
 
     delete mapGridGroup;
     mapGridGroup = nullptr;
@@ -62,20 +77,51 @@ void Map::DeleteItemFromGroup(QGraphicsItemGroup* group) {
 
 void Map::ClearMap() {
     DeleteItemFromGroup(mapGridGroup);
+    DeleteItemFromGroup(roadGroup);
 }
 
-void Map::DrawNode(const QPair<int, int>& index) {
-    mapGridGroup->addToGroup(
-                scene->addRect(
-                    QRectF(
-                        index.first * valueDivisionX + scene->sceneRect().left(),
-                        index.second * valueDivisionY + scene->sceneRect().top(),
-                        valueDivisionX,
-                        valueDivisionY
-                    ),
-                    mapGridPen,
-                    disabledNodeBrush
-                ));
+void Map::FindResultHandler(FindResult result) {
+    if(result.success) {
+        DrawPath(result.path, mapGridPen, roadBrush);
+    }
+    else {
+        ErrorBox::Message("FindError", QObject::tr("Path not found"));
+    }
+}
+
+void Map::FindResultMoveHandler(FindResult result) {
+    if(result.success) {
+        DrawNewPath(result.path, Qt::NoPen, roadBrush);
+    }
+    else {
+        DrawNewPath(result.path, Qt::NoPen, errorRoadBrush);
+    }
+}
+
+QGraphicsRectItem* Map::DrawNode(const QPair<int, int>& index, const QPen& pen, const QBrush& brush) {
+    return scene->addRect(
+                QRectF(
+                    index.first * valueDivisionX + scene->sceneRect().left(),
+                    index.second * valueDivisionY + scene->sceneRect().top(),
+                    valueDivisionX,
+                    valueDivisionY
+                ),
+                pen,
+                brush
+            );
+}
+
+QGraphicsEllipseItem* Map::DrawEllipseNode(const QPair<int, int>& index, const QPen& pen, const QBrush& brush) {
+    int radiusX = valueDivisionX / 4;
+    int radiusY = valueDivisionY / 4;
+    return scene->addEllipse(
+                index.first * valueDivisionX + scene->sceneRect().left() + radiusX,
+                index.second * valueDivisionY + scene->sceneRect().top() + radiusY,
+                radiusX * 2,
+                radiusY * 2,
+                pen,
+                brush
+            );
 }
 
 void Map::DrawMap(NodeList* disableNodes) {
@@ -112,13 +158,40 @@ void Map::DrawMap(NodeList* disableNodes) {
 
     if(disableNodes != nullptr && !disableNodes->empty()) {
         for(auto node : *disableNodes)
-            DrawNode(node);
+            mapGridGroup->addToGroup(DrawNode(node, mapGridPen, disabledNodeBrush));
     }
 }
 
 void Map::RedrawMap(NodeList* disableNodes) {
     ClearMap();
     DrawMap(disableNodes);
+}
+
+void Map::DrawPath(const Path<QPair<int, int>>* path, const QPen& pen, const QBrush& brush) {
+    DeleteItemFromGroup(newRoadGroup);
+    DeleteItemFromGroup(roadGroup);
+    for(auto it = path->begin(); it < path->end(); ++it) {
+        roadGroup->addToGroup(
+                    DrawNode(
+                        *it,
+                        pen,
+                        brush
+                    )
+                );
+    }
+}
+
+void Map::DrawNewPath(const Path<QPair<int, int>>* path, const QPen& pen, const QBrush& brush) {
+    DeleteItemFromGroup(newRoadGroup);
+    for(auto it = path->begin(); it < path->end(); ++it) {
+        newRoadGroup->addToGroup(
+                    DrawEllipseNode(
+                        *it,
+                        pen,
+                        brush
+                    )
+                );
+    }
 }
 
 void Map::Remove() {
@@ -132,10 +205,9 @@ void Map::Init(int w, int h) {
     valueDivisionX = scene->sceneRect().width() / w;
     valueDivisionY = scene->sceneRect().height() / h;
 
-    worker->setSize(QSize(width, height));
     worker->setValueDivision(valueDivisionX, valueDivisionY);
 
-    emit init();
+    emit init(w, h);
 }
 
 void Map::Create(int w, int h) {
@@ -205,4 +277,11 @@ void find_path::Map::mousePressEvent(QMouseEvent* event) {
         RButtonClick(event);
     }
     QGraphicsView::mousePressEvent(event);
+}
+
+void Map::mouseMoveEvent(QMouseEvent* event)  {
+    int i = event->pos().x(), j = event->pos().y();
+    CoordinatesToIndex(&i, &j);
+
+    emit mouseMove(i, j);
 }

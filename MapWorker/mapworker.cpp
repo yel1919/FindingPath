@@ -1,6 +1,11 @@
 #include "mapworker.h"
 
 using find_path::MapWorker;
+using find_path::Node;
+using find_path::Path;
+using find_path::Road;
+
+const int INF = 1e9;
 
 MapWorker::MapWorker(QObject* parent)
     :
@@ -8,7 +13,8 @@ MapWorker::MapWorker(QObject* parent)
       map(new MapMatrix({})),
       disableNodes(new NodeList({})),
       start(nullptr),
-      finish(nullptr),
+      road(nullptr),
+      newRoad(nullptr),
       width(0),
       height(0),
       valueDivisionX(0),
@@ -26,12 +32,11 @@ MapWorker::~MapWorker() {
     map = nullptr;
 }
 
-const QSize MapWorker::getSize() const {
-    return QSize(width, height);
-}
-void MapWorker::setSize(const QSize& size) {
-    width = size.width();
-    height = size.height();
+void MapWorker::DeleteRoad(Road*& path) {
+    if(path != nullptr) {
+        delete path;
+        path = nullptr;
+    }
 }
 
 const qreal MapWorker::getValueDivisionX() const {
@@ -55,9 +60,9 @@ void MapWorker::setValueDivision(qreal x, qreal y) {
     valueDivisionY = y;
 }
 
-void MapWorker::Bind(Node* from, Node* to) {
-    if(from->IsEnabled() && to->IsEnabled()) {
-        from->AddEdge(to);
+void MapWorker::Bind(Node& from, Node& to) {
+    if(from.IsEnabled() && to.IsEnabled()) {
+        from.AddEdge(to);
     }
 }
 
@@ -70,7 +75,9 @@ QRect MapWorker::CalcNodeRect(int index, int jndex) {
     );
 }
 
-void MapWorker::Initialization() {
+void MapWorker::Initialization(int w, int h) {
+    width = w;
+    height = h;
     map->resize(width, QVector<Node*>(height, nullptr));
 
     std::random_device rd;
@@ -82,13 +89,7 @@ void MapWorker::Initialization() {
             int modX = std::distance(map->begin(), itW);
             int modY = std::distance(itW->begin(), itH);
 
-            Node* node = new Node(
-                        CalcNodeRect(
-                            modX,
-                            modY
-                        ),
-                        dist(gen)
-            );
+            Node* node = new Node(dist(gen));
 
             *itH = node;
 
@@ -97,9 +98,9 @@ void MapWorker::Initialization() {
             }
 
             if(itW > map->begin())
-                Bind(node, *((itW - 1)->begin() + modY));
+                Bind(*node, **((itW - 1)->begin() + modY));
             if(itH > itW->begin())
-                Bind(node, *(itH - 1));
+                Bind(*node, **(itH - 1));
         }
     }
 
@@ -118,6 +119,9 @@ void MapWorker::Remove() {
     if(inited) {
         disableNodes->clear();
 
+        DeleteRoad(road);
+        DeleteRoad(newRoad);
+
         for(auto itW = map->begin(); itW < map->end(); ++itW) {
             for(auto itH = itW->begin(); itH < itW->end(); ++itH) {
                 delete *itH;
@@ -132,35 +136,127 @@ void MapWorker::Remove() {
     }
 }
 
-void MapWorker::Init() {
+void MapWorker::Init(int w, int h) {
     if(inited)
         Remove();
-    Initialization();
+    Initialization(w, h);
 }
 
 void MapWorker::Clear() {
     Remove();
 }
 
+Road* MapWorker::BFS(Node* from, Node* to) {
+    QHash<Node*, int> dist;
+    QHash<Node*, QPair<Node*, int>> p;
+    QQueue<Node*> q;
 
-void MapWorker::SetStart(int index, int jndex) {
+    for(auto itW = map->begin(); itW < map->end(); ++itW) {
+        for(auto itH = itW->begin(); itH < itW->end(); ++itH) {
+            dist[*itH] = INF;
+            p[*itH].first = nullptr;
+            p[*itH].second = (itW - map->begin()) * height + (itH - itW->begin());
+        }
+    }
+
+    dist[from] = 0;
+    q.enqueue(from);
+
+    while(!q.isEmpty()) {
+        Node* node = q.front();
+        q.dequeue();
+
+        for(Node* rel : node->RelatedEdges()) {
+            if(dist[rel] > dist[node] + 1) {
+                p[rel].first = node;
+                dist[rel] = dist[node] + 1;
+                q.enqueue(rel);
+            }
+        }
+    }
+
+    if(dist[to] == INF) {
+        return nullptr;
+    }
+
+    Road* _newRoad = new Road();
+    while(to != nullptr) {
+        _newRoad->push_front(
+                    {
+                        (p[to].second) / height,
+                        p[to].second - ((p[to].second) / height) * height
+                    }
+                );
+        to = p[to].first;
+    }
+    return _newRoad;
+}
+
+void MapWorker::SetPoint(int index, int jndex) {
     if(inited) {
         if(
                 index >= 0 && index < map->size() &&
                 jndex >= 0 && jndex < (*map)[index].size()
         ) {
-            start = (*map)[index][jndex];
+            if(start == nullptr) {
+                start = (*map)[index][jndex];
+            }
+            else {
+                Road* _road = FindPath(index, jndex);
+
+                FindResult result;
+                if(_road != nullptr) {
+                    result.path = _road;
+                    result.success = true;
+
+                    DeleteRoad(road);
+                    DeleteRoad(newRoad);
+
+                    road = _road;
+                    start = nullptr;
+                }
+                else {
+                    result.path = road;
+                }
+
+                emit roadChanged(result);
+            }
         }
     }
 }
 
-void MapWorker::SetFinish(int index, int jndex) {
+void MapWorker::SetMovePoint(int index, int jndex) {
     if(inited) {
         if(
                 index >= 0 && index < map->size() &&
-                jndex >= 0 && jndex < (*map)[index].size()
+                jndex >= 0 && jndex < (*map)[index].size() &&
+                start != nullptr
         ) {
-            finish = (*map)[index][jndex];
+            Road* _road = FindPath(index, jndex);
+
+            FindResult result;
+            if(_road != nullptr) {
+                result.path = _road;
+                result.success = true;
+
+                DeleteRoad(newRoad);
+                newRoad = _road;
+            }
+            else {
+                result.path = newRoad;
+            }
+
+            emit newRoadChanged(result);
         }
     }
+}
+
+Road* MapWorker::FindPath(int index, int jndex) {
+    if(
+            index >= 0 && index < map->size() &&
+            jndex >= 0 && jndex < (*map)[index].size()
+    ) {
+        return BFS(start, (*map)[index][jndex]);
+    }
+    return {};
 }

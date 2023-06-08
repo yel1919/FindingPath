@@ -2,11 +2,14 @@
 #define MAPWORKER_H
 
 #include <random>
-#include "../Node/node.h"
+#include <QQueue>
+#include <QHash>
+#include "../FindResult/findresult.h"
 
 namespace find_path {
     typedef QVector<QVector<Node*>> MapMatrix;
     typedef QList<QPair<int, int>> NodeList;
+    typedef Path<QPair<int, int>> Road;
 
     class MapWorker : public QObject {
         Q_OBJECT
@@ -16,7 +19,8 @@ namespace find_path {
         NodeList* disableNodes;
 
         Node* start;
-        Node* finish;
+        Road* road;
+        Road* newRoad;
 
         int width;
         int height;
@@ -25,18 +29,17 @@ namespace find_path {
 
         bool inited;
     protected:
-        void Initialization();
+        void Initialization(int width, int height);
         QRect CalcNodeRect(int index, int jndex);
         void Remove();
 
-        virtual void Bind(Node* from, Node* to);
-        //virtual Path<Node*> BFS(Node* from, Node* to);
+        void DeleteRoad(Road*& path);
+
+        virtual void Bind(Node& from, Node& to);
+        virtual Road* BFS(Node* from, Node* to);
     public:
         MapWorker(QObject* parent = nullptr);
         virtual ~MapWorker();
-
-        const QSize getSize() const;
-        void setSize(const QSize& size);
 
         const qreal getValueDivisionX() const;
         const qreal getValueDivisionY() const;
@@ -44,18 +47,19 @@ namespace find_path {
         void setValueDivisionY(qreal y);
         void setValueDivision(qreal x, qreal y);
 
-        void SetStart(int index, int jndex);
-        void SetFinish(int index, int jndex);
+        void SetPoint(int index, int jndex);
+        void SetMovePoint(int index, int jndex);
 
-        virtual void Init();
+        virtual void Init(int width, int height);
         virtual void Recalc();
         virtual void Clear();
-        //virtual Path<Node*> FindPath(int index, int jndex);
+        virtual Road* FindPath(int index, int jndex);
     public: signals:
         void removed();
         void ready(NodeList*);
         void recalcReady(NodeList*);
-        //void findFinished();
+        void roadChanged(FindResult);
+        void newRoadChanged(FindResult);
     };
 }
 
