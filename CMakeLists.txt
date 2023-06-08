@@ -15,6 +15,17 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
+        Error/error.h
+        Error/error.cpp
+        Path/path.h
+        Node/node.h
+        Node/node.cpp
+        FindResult/findresult.h
+        FindResult/findresult.cpp
+        Map/map.h
+        Map/map.cpp
+        MapWorker/mapworker.h
+        MapWorker/mapworker.cpp
         main.cpp
         mainwindow.cpp
         mainwindow.h
