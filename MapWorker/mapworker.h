@@ -57,7 +57,7 @@ namespace find_path {
     public: signals:
         void removed();
         void ready(NodeList*);
-        void recalcReady(NodeList*);
+        void recalcReady(NodeList*, Road*, Road*);
         void roadChanged(FindResult);
         void newRoadChanged(FindResult);
     };

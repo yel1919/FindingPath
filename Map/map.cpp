@@ -78,6 +78,7 @@ void Map::DeleteItemFromGroup(QGraphicsItemGroup* group) {
 void Map::ClearMap() {
     DeleteItemFromGroup(mapGridGroup);
     DeleteItemFromGroup(roadGroup);
+    DeleteItemFromGroup(newRoadGroup);
 }
 
 void Map::FindResultHandler(FindResult result) {
@@ -162,12 +163,15 @@ void Map::DrawMap(NodeList* disableNodes) {
     }
 }
 
-void Map::RedrawMap(NodeList* disableNodes) {
+void Map::RedrawMap(NodeList* disableNodes, Road* road, Road* newRoad) {
     ClearMap();
     DrawMap(disableNodes);
+    DrawPath(road, mapGridPen, roadBrush);
+    DrawNewPath(newRoad, Qt::NoPen, roadBrush);
 }
 
 void Map::DrawPath(const Path<QPair<int, int>>* path, const QPen& pen, const QBrush& brush) {
+    if(path == nullptr) return;
     DeleteItemFromGroup(newRoadGroup);
     DeleteItemFromGroup(roadGroup);
     for(auto it = path->begin(); it < path->end(); ++it) {
@@ -182,6 +186,7 @@ void Map::DrawPath(const Path<QPair<int, int>>* path, const QPen& pen, const QBr
 }
 
 void Map::DrawNewPath(const Path<QPair<int, int>>* path, const QPen& pen, const QBrush& brush) {
+    if(path == nullptr) return;
     DeleteItemFromGroup(newRoadGroup);
     for(auto it = path->begin(); it < path->end(); ++it) {
         newRoadGroup->addToGroup(

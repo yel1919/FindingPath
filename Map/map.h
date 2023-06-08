@@ -58,7 +58,7 @@ namespace find_path {
         virtual QGraphicsRectItem* DrawNode(const QPair<int, int>& index, const QPen& pen, const QBrush& brush);
         virtual QGraphicsEllipseItem* DrawEllipseNode(const QPair<int, int>& index, const QPen& pen, const QBrush& brush);
         virtual void DrawMap(NodeList* disableRects);
-        virtual void RedrawMap(NodeList* disableRects);
+        virtual void RedrawMap(NodeList* disableRects, Road* road, Road* newRoad);
         virtual void DrawPath(const Path<QPair<int, int>>* path, const QPen& pen, const QBrush& brush);
         virtual void DrawNewPath(const Path<QPair<int, int>>* path, const QPen& pen, const QBrush& brush);
 

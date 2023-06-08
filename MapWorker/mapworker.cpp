@@ -111,7 +111,7 @@ void MapWorker::Initialization(int w, int h) {
 
 void MapWorker::Recalc() {
     if(inited) {
-        emit recalcReady(disableNodes);
+        emit recalcReady(disableNodes, road, newRoad);
     }
 }
 
@@ -198,10 +198,10 @@ void MapWorker::SetPoint(int index, int jndex) {
                 index >= 0 && index < map->size() &&
                 jndex >= 0 && jndex < (*map)[index].size()
         ) {
-            if(start == nullptr) {
+            if(start == nullptr && (*map)[index][jndex]->IsEnabled()) {
                 start = (*map)[index][jndex];
             }
-            else {
+            else if(start != nullptr) {
                 Road* _road = FindPath(index, jndex);
 
                 FindResult result;
