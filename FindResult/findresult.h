@@ -12,6 +12,12 @@ namespace find_path {
         bool success;
 
         FindResult();
+        FindResult(const FindResult& result);
+        FindResult(FindResult&& result);
+        virtual ~FindResult() {}
+
+        FindResult& operator=(const FindResult& result);
+        FindResult& operator=(FindResult&& result);
     };
 }
 
